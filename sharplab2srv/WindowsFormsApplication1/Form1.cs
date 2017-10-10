@@ -11,7 +11,7 @@ using System.Net.Sockets;
 using System.IO;
 using System.Threading;
 using System.Runtime.Serialization.Formatters.Binary;
-
+using ClassAutoLab2;//class auto
 namespace WindowsFormsApplication1
 {
     public partial class Form1 : Form
@@ -68,12 +68,6 @@ namespace WindowsFormsApplication1
         }
         void ThreadOperations()
         {
-            //Создаем новую переменную типа byte[]
-            byte[] received = new byte[256];
-            //С помощью сетевого потока считываем в переменную received данные от клиента
-           // ns.Read(received, 0, received.Length);
-           // String s1 = ae.GetString(received);
-
             BinaryFormatter bf = new BinaryFormatter();
             String s1 = (String)bf.Deserialize(ns);
 
@@ -81,18 +75,8 @@ namespace WindowsFormsApplication1
             String cmd = s1.Substring(0, i);
             if (cmd.CompareTo("view") == 0)
             {
-                // Создаем переменную типа byte[] для отправки ответа клиенту
-                byte[] sent = new byte[256];
-
-                //Создаем объект класса FileStream для последующего чтения информации из файла
-                FileStream fstr = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-                StreamReader sr = new StreamReader(fstr);
-                //Запись в переменную sent содержания прочитанного файла
-                sent = ae.GetBytes(sr.ReadToEnd());
-                sr.Close();
-                fstr.Close();
-                //Отправка информации клиенту
-                ns.Write(sent, 0, sent.Length);
+                list = Deserealize();
+                bf.Serialize(ns,list);
             }
             if (cmd.CompareTo("add") == 0)
             {
@@ -157,29 +141,4 @@ namespace WindowsFormsApplication1
             return list;
         }
     }
-    [Serializable]
-    class Auto
-    {
-        private String marka;
-        private String model;
-        private int year;
-        public Auto() { }
-        public Auto(String a, String b, int c)
-        {
-            this.marka = a;
-            this.model = b;
-            this.year = c;
-        }
-        public void setData(String a, String b, int c)
-        {
-            this.marka = a;
-            this.model = b;
-            this.year = c;
-        }
-        public override string ToString()
-        {
-            return marka + " " + model + " " + year;
-        }
-    }
-
 }

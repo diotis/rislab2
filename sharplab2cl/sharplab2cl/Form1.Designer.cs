@@ -84,7 +84,7 @@
             // 
             this.button1.Location = new System.Drawing.Point(234, 198);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(141, 36);
+            this.button1.Size = new System.Drawing.Size(124, 36);
             this.button1.TabIndex = 26;
             this.button1.Text = "Выполнить";
             this.button1.UseVisualStyleBackColor = true;
@@ -185,9 +185,9 @@
             // listBox1
             // 
             this.listBox1.FormattingEnabled = true;
-            this.listBox1.Location = new System.Drawing.Point(468, 155);
+            this.listBox1.Location = new System.Drawing.Point(384, 145);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(159, 147);
+            this.listBox1.Size = new System.Drawing.Size(243, 160);
             this.listBox1.TabIndex = 16;
             // 
             // Form1

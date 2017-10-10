@@ -12,14 +12,14 @@ using System.Net.Sockets;
 using System.IO;
 using System.Threading;
 using System.Runtime.Serialization.Formatters.Binary;
-
+using ClassAutoLab2;//class auto
 namespace sharplab2cl
 {
     public partial class Form1 : Form
     {
         TcpClient tcp_client = new TcpClient("localhost", 5555);
         ASCIIEncoding ae = new ASCIIEncoding();
-        List<Auto> list;
+        List<Auto> list = new List<Auto>();
         public Form1()
         {
             InitializeComponent();
@@ -33,25 +33,20 @@ namespace sharplab2cl
         }
         private void operation_Click(object sender, EventArgs e)
         {
-            try {
+            try
+            {
+                BinaryFormatter bf = new BinaryFormatter();
                 if (radio_view.Checked == true)
                 {
-                    //Создаем объект класса NetworkStream и ассоциируем его объектом класса TcpClient
                     NetworkStream ns = tcp_client.GetStream();
-                    String command = "view";
-                    String res = command + "|";
-                    //Создаем переменные типа byte[] для отправки запроса и получения результата
-                    byte[] sent = ae.GetBytes(res);
-                    byte[] recieved = new byte[256];
-                    //Отправляем запрос на сервер
-                    ns.Write(sent, 0, sent.Length);
-                    //Получаем результат выполнения запроса с сервера
-                    ns.Read(recieved, 0, recieved.Length);
-                    //Отображаем полученный результат в клиентском RichTextBox
-                    richTextBox1.Text = ae.GetString(recieved);
-                    String status = "=>Command sent:view data";
-                    //Отображаем служебную информацию в клиентском ListBox
-                    listBox1.Items.Add(status);
+                    String command = "view|";
+                    bf.Serialize(ns, command);
+                    list = (List<Auto>)bf.Deserialize(ns);
+                    this.listBox1.Items.AddRange(list.ToArray());
+                    this.listBox1.MultiColumn = true;
+                    this.listBox1.ColumnWidth = 243;
+                    listBox1.Visible = true;
+
                 }
                 else if (radio_add.Checked == true)
                 {
@@ -63,7 +58,6 @@ namespace sharplab2cl
                     String res = "|";
                     Auto a = new Auto(data, str, y);
                     list.Add(a);
-                    BinaryFormatter bf = new BinaryFormatter();
                     bf.Serialize(ns, command + res + a + res);
                     String s1 = (String)bf.Deserialize(ns);
                     richTextBox1.Text += s1;
@@ -100,7 +94,7 @@ namespace sharplab2cl
                     i++;
                 }
             }
-          //  fstr.Close();
+            //  fstr.Close();
         }
         private List<Auto> Deserealize()
         {
@@ -173,31 +167,10 @@ namespace sharplab2cl
             {
                 richTextBox1.Visible = true;
             }
-            else {
+            else
+            {
                 richTextBox1.Visible = false; ;
             }
-        }
-    }
-    [Serializable]
-    class Auto
-    {
-        private String marka;
-        private String model;
-        private int year;
-        Auto() { }
-        public Auto(String a, String b, int c) {
-            this.marka = a;
-            this.model = b;
-            this.year = c;
-        }
-        public void setData(String a, String b, int c) {
-            this.marka = a;
-            this.model = b;
-            this.year = c;
-        }
-        public override string ToString()
-        {
-            return marka+" "+model+" "+year;
         }
     }
 }

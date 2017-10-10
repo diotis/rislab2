@@ -47,7 +47,7 @@
             this.ClientSize = new System.Drawing.Size(337, 94);
             this.Controls.Add(this.err);
             this.Name = "Form2";
-            this.Text = "Error";
+            this.Text = "Message";
             this.ResumeLayout(false);
             this.PerformLayout();
 

@@ -211,7 +211,7 @@
             this.Controls.Add(this.radio_view);
             this.Controls.Add(this.listBox1);
             this.Name = "Form1";
-            this.Text = "Клиент";
+            this.Text = "Client";
             this.ResumeLayout(false);
             this.PerformLayout();
 

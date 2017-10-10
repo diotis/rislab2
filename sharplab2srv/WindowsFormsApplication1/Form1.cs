@@ -10,6 +10,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.IO;
 using System.Threading;
+using System.Runtime.Serialization.Formatters.Binary;
+
 namespace WindowsFormsApplication1
 {
     public partial class Form1 : Form
@@ -19,7 +21,7 @@ namespace WindowsFormsApplication1
             InitializeComponent();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void start(object sender, EventArgs e)
         {
             String fileName = "d:\\files\\ris\\lab2.txt";
             int fileCount = 0;
@@ -42,6 +44,7 @@ namespace WindowsFormsApplication1
             }
         }
     }
+
     public class ThreadClass
     {
         Form1 form = null;
@@ -49,7 +52,7 @@ namespace WindowsFormsApplication1
         ASCIIEncoding ae = null;
         String fileName = null;
         int fileCount = 0;
-
+        List<Auto> list = new List<Auto>();
         public Thread Start(NetworkStream ns, String fileName, int fileCount, Form1 form)
         {
             this.ns = ns;
@@ -68,8 +71,12 @@ namespace WindowsFormsApplication1
             //Создаем новую переменную типа byte[]
             byte[] received = new byte[256];
             //С помощью сетевого потока считываем в переменную received данные от клиента
-            ns.Read(received, 0, received.Length);
-            String s1 = ae.GetString(received);
+           // ns.Read(received, 0, received.Length);
+           // String s1 = ae.GetString(received);
+
+            BinaryFormatter bf = new BinaryFormatter();
+            String s1 = (String)bf.Deserialize(ns);
+
             int i = s1.IndexOf("|", 0);
             String cmd = s1.Substring(0, i);
             if (cmd.CompareTo("view") == 0)
@@ -87,6 +94,92 @@ namespace WindowsFormsApplication1
                 //Отправка информации клиенту
                 ns.Write(sent, 0, sent.Length);
             }
+            if (cmd.CompareTo("add") == 0)
+            {
+                byte[] sent = new byte[256];
+                int n = s1.IndexOf("|", i+1);
+                String msg = s1.Substring(i+1, n-i-1);
+                FileStream fstr = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write);
+                fstr.Seek(0, SeekOrigin.End);
+                Auto help = new Auto();
+
+                n = msg.IndexOf(" ");
+                String marka = msg.Substring(0,n);
+                i = n+1;
+                n = msg.IndexOf(" ", i);
+                String model = msg.Substring(i,n-i);
+                i = msg.Length-n-1;
+                String y = msg.Substring(n+1, i);
+                help.setData(marka,model, Convert.ToInt32(y));
+                bf.Serialize(fstr, help);
+                fstr.Close();
+                bf.Serialize(ns, "Элемент добавлен!");
+            }
+        }
+        private void Serialize()
+        {
+            FileStream fstr = new FileStream("d:\\files\\ris\\lab2.txt", FileMode.Create, FileAccess.Write);
+            BinaryFormatter bf = new BinaryFormatter();
+            if (list.Count > 0)
+            {
+                int i = 0;
+                while (i < list.Count)
+                {
+                    bf.Serialize(fstr, list.ElementAt(i));
+                    i++;
+                }
+            }
+            fstr.Close();
+        }
+        private List<Auto> Deserealize()
+        {
+            FileStream fstr = new FileStream("d:\\files\\ris\\lab2.txt", FileMode.OpenOrCreate, FileAccess.Read);
+            list.Clear();
+            StreamReader reader = new StreamReader(fstr); // создаем «потоковый читатель» и связываем его с файловым потоком 
+            reader.ReadToEnd();
+            if (fstr.Position == 0)
+            {
+                Console.Write("файл пуст\n");
+            }
+            else
+            {
+                long length = fstr.Position;
+                fstr.Seek(0, SeekOrigin.Begin);
+                BinaryFormatter bf = new BinaryFormatter();
+                while (fstr.Position < length)
+                {
+                    Auto pr = (Auto)bf.Deserialize(fstr);
+                    list.Add(pr);
+                }
+            }
+            reader.Close();
+            fstr.Close();
+            return list;
         }
     }
+    [Serializable]
+    class Auto
+    {
+        private String marka;
+        private String model;
+        private int year;
+        public Auto() { }
+        public Auto(String a, String b, int c)
+        {
+            this.marka = a;
+            this.model = b;
+            this.year = c;
+        }
+        public void setData(String a, String b, int c)
+        {
+            this.marka = a;
+            this.model = b;
+            this.year = c;
+        }
+        public override string ToString()
+        {
+            return marka + " " + model + " " + year;
+        }
+    }
+
 }

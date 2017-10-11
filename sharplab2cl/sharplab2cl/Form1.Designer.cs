@@ -42,7 +42,7 @@
             this.radio_del = new System.Windows.Forms.RadioButton();
             this.radio_add = new System.Windows.Forms.RadioButton();
             this.radio_view = new System.Windows.Forms.RadioButton();
-            this.listBox1 = new System.Windows.Forms.ListBox();
+            this.listBox = new System.Windows.Forms.ListBox();
             this.SuspendLayout();
             // 
             // richTextBox1
@@ -182,13 +182,13 @@
             this.radio_view.UseVisualStyleBackColor = true;
             this.radio_view.CheckedChanged += new System.EventHandler(this.radio_view_CheckedChanged);
             // 
-            // listBox1
+            // listBox
             // 
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.Location = new System.Drawing.Point(384, 145);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(243, 160);
-            this.listBox1.TabIndex = 16;
+            this.listBox.FormattingEnabled = true;
+            this.listBox.Location = new System.Drawing.Point(384, 145);
+            this.listBox.Name = "listBox";
+            this.listBox.Size = new System.Drawing.Size(243, 160);
+            this.listBox.TabIndex = 16;
             // 
             // Form1
             // 
@@ -209,9 +209,10 @@
             this.Controls.Add(this.radio_del);
             this.Controls.Add(this.radio_add);
             this.Controls.Add(this.radio_view);
-            this.Controls.Add(this.listBox1);
+            this.Controls.Add(this.listBox);
             this.Name = "Form1";
             this.Text = "Client";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.closed);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -233,7 +234,7 @@
         private System.Windows.Forms.RadioButton radio_del;
         private System.Windows.Forms.RadioButton radio_add;
         private System.Windows.Forms.RadioButton radio_view;
-        private System.Windows.Forms.ListBox listBox1;
+        private System.Windows.Forms.ListBox listBox;
     }
 }
 

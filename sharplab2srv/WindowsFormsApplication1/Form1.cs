@@ -20,27 +20,34 @@ namespace WindowsFormsApplication1
         {
             InitializeComponent();
         }
+        public void info(String str) {
+            rtb1.Text += str + "\n";
+        }
 
         private void start(object sender, EventArgs e)
         {
-            String fileName = "d:\\files\\ris\\lab2.txt";
-            int fileCount = 0;
-            TcpListener listener = null;
-            Socket socket = null;
-            NetworkStream ns = null;
-            ASCIIEncoding ae = null;
-            listener = new TcpListener(IPAddress.Any, 5555);
-            // Активация listen’ера
-            listener.Start();
-            socket = listener.AcceptSocket();
-            if (socket.Connected)
-            {
-                ns = new NetworkStream(socket);
-                ae = new ASCIIEncoding();
-                //Создаем новый экземпляр класса ThreadClass
-                ThreadClass threadClass = new ThreadClass();
-                //Создаем новый поток
-                Thread thread = threadClass.Start(ns, fileName, fileCount, this);
+            try {
+                String fileName = "d:\\files\\ris\\lab2.txt";
+                int fileCount = 0;
+                TcpListener listener = null;
+                Socket socket = null;
+                NetworkStream ns = null;
+                ASCIIEncoding ae = null;
+                listener = new TcpListener(IPAddress.Any, 5555);
+                // Активация listen’ера
+                listener.Start();
+                socket = listener.AcceptSocket();
+                if (socket.Connected)
+                {
+                    ns = new NetworkStream(socket);
+                    ae = new ASCIIEncoding();
+                    //Создаем новый экземпляр класса ThreadClass
+                    ThreadClass threadClass = new ThreadClass();
+                    //Создаем новый поток
+                    Thread thread = threadClass.Start(ns, fileName, fileCount, this);
+                }
+            } catch (Exception ex) {
+                info(ex.Message);
             }
         }
     }
@@ -55,6 +62,7 @@ namespace WindowsFormsApplication1
         List<Auto> list = new List<Auto>();
         public Thread Start(NetworkStream ns, String fileName, int fileCount, Form1 form)
         {
+            
             this.ns = ns;
             ae = new ASCIIEncoding();
             this.fileName = fileName;
@@ -68,37 +76,62 @@ namespace WindowsFormsApplication1
         }
         void ThreadOperations()
         {
+           
             BinaryFormatter bf = new BinaryFormatter();
-            String s1 = (String)bf.Deserialize(ns);
+            String s1;
+            String cmd = "";
 
-            int i = s1.IndexOf("|", 0);
-            String cmd = s1.Substring(0, i);
-            if (cmd.CompareTo("view") == 0)
+            while (cmd != "exit")
             {
-                list = Deserealize();
-                bf.Serialize(ns,list);
-            }
-            if (cmd.CompareTo("add") == 0)
-            {
-                byte[] sent = new byte[256];
-                int n = s1.IndexOf("|", i+1);
-                String msg = s1.Substring(i+1, n-i-1);
-                FileStream fstr = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write);
-                fstr.Seek(0, SeekOrigin.End);
-                Auto help = new Auto();
+                s1 = (String)bf.Deserialize(ns);
+                int i = s1.IndexOf("|", 0);
+                cmd = s1.Substring(0, i);
+                if (cmd.CompareTo("view") == 0)
+                {
+                    list = Deserealize();
+                    bf.Serialize(ns, list);
+                    form.info("Список отправлен клиенту");
+                }
+                if (cmd.CompareTo("add") == 0)
+                {
+                    int n = s1.IndexOf("|", i + 1);
+                    String msg = s1.Substring(i + 1, n - i - 1);
+                    FileStream fstr = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write);
+                    fstr.Seek(0, SeekOrigin.End);
+                    Auto help = new Auto();
 
-                n = msg.IndexOf(" ");
-                String marka = msg.Substring(0,n);
-                i = n+1;
-                n = msg.IndexOf(" ", i);
-                String model = msg.Substring(i,n-i);
-                i = msg.Length-n-1;
-                String y = msg.Substring(n+1, i);
-                help.setData(marka,model, Convert.ToInt32(y));
-                bf.Serialize(fstr, help);
-                fstr.Close();
-                bf.Serialize(ns, "Элемент добавлен!");
+                    n = msg.IndexOf(" ");
+                    String marka = msg.Substring(0, n);
+                    i = n + 1;
+                    n = msg.IndexOf(" ", i);
+                    String model = msg.Substring(i, n - i);
+                    i = msg.Length - n - 1;
+                    String y = msg.Substring(n + 1, i);
+                    help.setData(marka, model, Convert.ToInt32(y));
+                    bf.Serialize(fstr, help);
+                    fstr.Close();
+                    bf.Serialize(ns, "Элемент добавлен!");
+                    form.info("Клиент добавил новый элемент списка");
+                }
+                if (cmd.CompareTo("del") == 0)
+                {
+                    int n = s1.IndexOf("|", i + 1);
+                    int del = Convert.ToInt32(s1.Substring(i + 1, n - i - 1));
+                    list.RemoveAt(del);
+                    Serialize();
+                    bf.Serialize(ns, "Элемент " + (del+1) + " удален!");
+                    form.info("Клиент удалил элемент №" + (del + 1));
+                }
+                if (cmd.CompareTo("edit") == 0)
+                {
+                    bf.Serialize(ns, "go");
+                    list = (List<Auto>)bf.Deserialize(ns);
+                    Serialize();
+                    bf.Serialize(ns, "Отредактировано!");
+                    form.info("Клиент отредактировал элемент списка");
+                }
             }
+            form.info("Клиент завершил работу");
         }
         private void Serialize()
         {

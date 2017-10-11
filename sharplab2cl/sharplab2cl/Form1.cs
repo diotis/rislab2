@@ -20,59 +20,135 @@ namespace sharplab2cl
         TcpClient tcp_client = new TcpClient("localhost", 5555);
         ASCIIEncoding ae = new ASCIIEncoding();
         List<Auto> list = new List<Auto>();
+        
         public Form1()
         {
             InitializeComponent();
             marka.Enabled = false;
             model.Enabled = false;
             year.Enabled = false;
-            listBox1.Visible = false;
+            listBox.Visible = false;
             checkBox1.Checked = true;
             list = new List<Auto>();
 
+        }
+        private void clearAdd()
+        {
+            marka.Text = "";
+            model.Text = "";
+            year.Text = "";
         }
         private void operation_Click(object sender, EventArgs e)
         {
             try
             {
                 BinaryFormatter bf = new BinaryFormatter();
+                NetworkStream ns = tcp_client.GetStream();
+
                 if (radio_view.Checked == true)
                 {
-                    NetworkStream ns = tcp_client.GetStream();
                     String command = "view|";
                     bf.Serialize(ns, command);
+                    this.listBox.Items.Clear();
                     list = (List<Auto>)bf.Deserialize(ns);
-                    this.listBox1.Items.AddRange(list.ToArray());
-                    this.listBox1.MultiColumn = true;
-                    this.listBox1.ColumnWidth = 243;
-                    listBox1.Visible = true;
+                    this.listBox.Items.AddRange(list.ToArray());
+                    this.listBox.MultiColumn = true;
+                    this.listBox.ColumnWidth = 243;
+                    listBox.Visible = true;
 
                 }
                 else if (radio_add.Checked == true)
                 {
-                    NetworkStream ns = tcp_client.GetStream();
                     String data = marka.Text;
                     String str = model.Text;
                     int y = Convert.ToInt32(year.Text);
-                    String command = "add";
-                    String res = "|";
+
                     Auto a = new Auto(data, str, y);
                     list.Add(a);
-                    bf.Serialize(ns, command + res + a + res);
+                    bf.Serialize(ns, "add|" + a + "|");
                     String s1 = (String)bf.Deserialize(ns);
-                    richTextBox1.Text += s1;
+                    richTextBox1.Text += (s1+"\n");
+                    clearAdd();
                 }
                 else if (radio_create.Checked == true)
                 {
+                    int i = listBox.SelectedIndex;
+                    if (marka.Enabled == false)
+                    {
+                        if (i != -1)
+                        {
+                            Auto help = (Auto)listBox.SelectedItem;
+                            marka.Text = help.marka;
+                            model.Text = help.model;
+                            year.Text = help.year.ToString();
+                            marka.Enabled = true;
+                            model.Enabled = true;
+                            year.Enabled = true;
+                        }
+                        else
+                        {
+                            throw new Exception("Выберите элемент из списка!");
+                        }
+                    }
+                    else {
+                        list.ElementAt(i).marka = marka.Text;
+                        list.ElementAt(i).model = model.Text;
+                        list.ElementAt(i).year = Convert.ToInt32(year.Text);
 
+                        bf.Serialize(ns, "edit|");
+                        String s1 = (String)bf.Deserialize(ns);
+                        if (s1 == "go")
+                        {
+                            bf.Serialize(ns, list);
+
+                            clearAdd();
+
+                            listBox.Items.Clear();
+
+                            s1 = (String)bf.Deserialize(ns);
+                            richTextBox1.Text += (s1 + "\n");
+                        }
+                        else {
+                            throw new Exception("Ошибка редактрования");
+                        }
+                    }
                 }
                 else if (radio_del.Checked == true)
                 {
-
+                    int i = listBox.SelectedIndex;
+                    if (i != -1)
+                    {
+                        bf.Serialize(ns, "del|" + i + "|");
+                        String s1 = (String)bf.Deserialize(ns);
+                        this.listBox.Items.Clear();
+                        richTextBox1.Text += (s1 + "\n");
+                    }
+                    else {
+                        throw new Exception("Выберите элемент из списка!");
+                    }
                 }
                 else if (radio_find.Checked == true)
                 {
+                    if (list.Count > 0)
+                    {
+                        List<Auto> help;
+                        if (marka.Text != "")
+                        {
+                            help = list.FindAll(x => x.marka.Contains(marka.Text));
 
+                            if (model.Text != "")
+                            {
+                                help = help.FindAll(x => x.model.Contains(model.Text));
+                            }
+                            this.listBox.Items.Clear();
+                            this.listBox.Items.AddRange(help.ToArray());
+                            this.listBox.Visible = true;
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("Список пуст!");
+                    }
                 }
             }
             catch (Exception ex)
@@ -82,51 +158,13 @@ namespace sharplab2cl
                 errWindow.Show();
             }
         }
-        private void Serialize(Stream fstr)
-        {
-            BinaryFormatter bf = new BinaryFormatter();
-            if (list.Count > 0)
-            {
-                int i = 0;
-                while (i < list.Count)
-                {
-                    bf.Serialize(fstr, list.ElementAt(i));
-                    i++;
-                }
-            }
-            //  fstr.Close();
-        }
-        private List<Auto> Deserealize()
-        {
-            FileStream fstr = new FileStream("d:\\files\\ris\\lab2.txt", FileMode.OpenOrCreate, FileAccess.Read);
-            list.Clear();
-            StreamReader reader = new StreamReader(fstr); // создаем «потоковый читатель» и связываем его с файловым потоком 
-            reader.ReadToEnd();
-            if (fstr.Position == 0)
-            {
-                Console.Write("файл пуст\n");
-            }
-            else
-            {
-                long length = fstr.Position;
-                fstr.Seek(0, SeekOrigin.Begin);
-                BinaryFormatter bf = new BinaryFormatter();
-                while (fstr.Position < length)
-                {
-                    Auto pr = (Auto)bf.Deserialize(fstr);
-                    list.Add(pr);
-                }
-            }
-            reader.Close();
-            fstr.Close();
-            return list;
-        }
+       
         private void radio_add_CheckedChanged(object sender, EventArgs e)
         {
             marka.Enabled = true;
             model.Enabled = true;
             year.Enabled = true;
-            listBox1.Visible = false;
+            listBox.Visible = false;
         }
 
         private void radio_view_CheckedChanged(object sender, EventArgs e)
@@ -134,12 +172,13 @@ namespace sharplab2cl
             marka.Enabled = false;
             model.Enabled = false;
             year.Enabled = false;
-            listBox1.Visible = false;
+            listBox.Visible = false;
+            clearAdd();
         }
 
         private void radio_del_CheckedChanged(object sender, EventArgs e)
         {
-            listBox1.Visible = true;
+            listBox.Visible = true;
             marka.Enabled = false;
             model.Enabled = false;
             year.Enabled = false;
@@ -147,7 +186,7 @@ namespace sharplab2cl
 
         private void radio_create_CheckedChanged(object sender, EventArgs e)
         {
-            listBox1.Visible = true;
+            listBox.Visible = true;
             marka.Enabled = false;
             model.Enabled = false;
             year.Enabled = false;
@@ -155,9 +194,9 @@ namespace sharplab2cl
 
         private void radio_find_CheckedChanged(object sender, EventArgs e)
         {
-            listBox1.Visible = true;
-            marka.Enabled = false;
-            model.Enabled = false;
+            listBox.Visible = false;
+            marka.Enabled = true;
+            model.Enabled = true;
             year.Enabled = false;
         }
 
@@ -171,6 +210,13 @@ namespace sharplab2cl
             {
                 richTextBox1.Visible = false; ;
             }
+        }
+
+        private void closed(object sender, FormClosedEventArgs e)
+        {
+            NetworkStream ns = tcp_client.GetStream();
+            BinaryFormatter bf = new BinaryFormatter();
+            bf.Serialize(ns, "exit|");
         }
     }
 }

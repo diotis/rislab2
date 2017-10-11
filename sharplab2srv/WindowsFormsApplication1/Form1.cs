@@ -16,35 +16,60 @@ namespace WindowsFormsApplication1
 {
     public partial class Form1 : Form
     {
-        public Form1()
-        {
+      //  public delegate void InvokeDelegate(String s);
+       // public InvokeDelegate inf;
+        int fileCount = 0;
+        String fileName = "d:\\files\\ris\\lab2.txt";
+        TcpListener listener = null;
+        Socket socket = null;
+
+        public Form1(){
             InitializeComponent();
+            //rtb1.BeginInvoke(new InvokeDelegate(info));
         }
+
+        public RichTextBox rtb() {
+            return rtb1;
+        }
+
         public void info(String str) {
             rtb1.Text += str + "\n";
         }
+      
+        private void Run()
+        {
+            fileCount++;
+            NetworkStream ns = new NetworkStream(socket);
+            //Создаем новый экземпляр класса ThreadClass
+            ThreadClass threadClass = new ThreadClass();
+            //Создаем новый поток
+            Thread thread = threadClass.Start(ns, fileName, fileCount, this);
+
+            while (!threadClass.getCheck())
+            {
+                Thread.Sleep(10);
+                thread.Join();
+            }
+        }
+        
 
         private void start(object sender, EventArgs e)
         {
-            try {
-                String fileName = "d:\\files\\ris\\lab2.txt";
-                int fileCount = 0;
-                TcpListener listener = null;
-                Socket socket = null;
-                NetworkStream ns = null;
-                ASCIIEncoding ae = null;
+            //rtb1.BeginInvoke(new InvokeDelegate(info));
+
+            try
+            {
+                //NetworkStream ns = null;
                 listener = new TcpListener(IPAddress.Any, 5555);
                 // Активация listen’ера
                 listener.Start();
-                socket = listener.AcceptSocket();
-                if (socket.Connected)
-                {
-                    ns = new NetworkStream(socket);
-                    ae = new ASCIIEncoding();
-                    //Создаем новый экземпляр класса ThreadClass
-                    ThreadClass threadClass = new ThreadClass();
-                    //Создаем новый поток
-                    Thread thread = threadClass.Start(ns, fileName, fileCount, this);
+                while (true) {
+                    socket = listener.AcceptSocket();
+                    if (socket.Connected)
+                    {
+                        Thread thread = new Thread(new ThreadStart(Run));
+                        thread.Start();
+                    }
                 }
             } catch (Exception ex) {
                 info(ex.Message);
@@ -54,19 +79,30 @@ namespace WindowsFormsApplication1
 
     public class ThreadClass
     {
+
+        private bool check = false;
+        private int num;
+
+        public int getNum(){
+            return num;
+        }
+        public void setNum(int n){
+            num = n;
+        }
+        public bool getCheck() {
+            return check;
+        }
         Form1 form = null;
         NetworkStream ns = null;
-        ASCIIEncoding ae = null;
         String fileName = null;
-        int fileCount = 0;
         List<Auto> list = new List<Auto>();
+
         public Thread Start(NetworkStream ns, String fileName, int fileCount, Form1 form)
         {
-            
             this.ns = ns;
-            ae = new ASCIIEncoding();
+            //ae = new ASCIIEncoding();
             this.fileName = fileName;
-            this.fileCount = fileCount;
+            this.num = fileCount;
             this.form = form;
             //Создание нового экземпляра класса Thread 
             Thread thread = new Thread(new ThreadStart(ThreadOperations));
@@ -74,9 +110,11 @@ namespace WindowsFormsApplication1
             thread.Start();
             return thread;
         }
+
         void ThreadOperations()
         {
-           
+            //form.info("Клиент подключился к системе");
+         //   form.Invoke(form.inf, new Object[] { "Клиент подключился к системе" });
             BinaryFormatter bf = new BinaryFormatter();
             String s1;
             String cmd = "";
@@ -90,7 +128,7 @@ namespace WindowsFormsApplication1
                 {
                     list = Deserealize();
                     bf.Serialize(ns, list);
-                    form.info("Список отправлен клиенту");
+                    //form.info("Список отправлен клиенту");
                 }
                 if (cmd.CompareTo("add") == 0)
                 {
@@ -111,7 +149,7 @@ namespace WindowsFormsApplication1
                     bf.Serialize(fstr, help);
                     fstr.Close();
                     bf.Serialize(ns, "Элемент добавлен!");
-                    form.info("Клиент добавил новый элемент списка");
+                    //form.info("Клиент добавил новый элемент списка");
                 }
                 if (cmd.CompareTo("del") == 0)
                 {
@@ -120,7 +158,7 @@ namespace WindowsFormsApplication1
                     list.RemoveAt(del);
                     Serialize();
                     bf.Serialize(ns, "Элемент " + (del+1) + " удален!");
-                    form.info("Клиент удалил элемент №" + (del + 1));
+                    //form.info("Клиент удалил элемент №" + (del + 1));
                 }
                 if (cmd.CompareTo("edit") == 0)
                 {
@@ -128,10 +166,11 @@ namespace WindowsFormsApplication1
                     list = (List<Auto>)bf.Deserialize(ns);
                     Serialize();
                     bf.Serialize(ns, "Отредактировано!");
-                    form.info("Клиент отредактировал элемент списка");
+                    //form.info("Клиент отредактировал элемент списка");
                 }
             }
-            form.info("Клиент завершил работу");
+            //form.info("Клиент завершил работу");
+            check = true;
         }
         private void Serialize()
         {

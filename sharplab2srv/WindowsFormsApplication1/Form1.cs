@@ -16,8 +16,11 @@ namespace WindowsFormsApplication1
 {
     public partial class Form1 : Form
     {
-      //  public delegate void InvokeDelegate(String s);
-       // public InvokeDelegate inf;
+        //public delegate void ServerInfo(String myString);
+        //public ServerInfo myDelegate;
+
+        private readonly SynchronizationContext syncContext;
+
         int fileCount = 0;
         String fileName = "d:\\files\\ris\\lab2.txt";
         TcpListener listener = null;
@@ -25,7 +28,8 @@ namespace WindowsFormsApplication1
 
         public Form1(){
             InitializeComponent();
-            //rtb1.BeginInvoke(new InvokeDelegate(info));
+            //myDelegate = new ServerInfo(info);
+            syncContext = SynchronizationContext.Current;
         }
 
         public RichTextBox rtb() {
@@ -33,6 +37,7 @@ namespace WindowsFormsApplication1
         }
 
         public void info(String str) {
+            //syncContext.Post();
             rtb1.Text += str + "\n";
         }
       
@@ -40,28 +45,22 @@ namespace WindowsFormsApplication1
         {
             fileCount++;
             NetworkStream ns = new NetworkStream(socket);
-            //Создаем новый экземпляр класса ThreadClass
             ThreadClass threadClass = new ThreadClass();
-            //Создаем новый поток
-            Thread thread = threadClass.Start(ns, fileName, fileCount, this);
+            threadClass.Start(ns, fileName, fileCount, this);
 
-            while (!threadClass.getCheck())
-            {
-                Thread.Sleep(10);
-                thread.Join();
-            }
+            //while (!threadClass.getCheck())
+            //{
+            //    Thread.Sleep(10);
+            //    thread.Join();
+            //}
         }
         
 
         private void start(object sender, EventArgs e)
         {
-            //rtb1.BeginInvoke(new InvokeDelegate(info));
-
             try
             {
-                //NetworkStream ns = null;
                 listener = new TcpListener(IPAddress.Any, 5555);
-                // Активация listen’ера
                 listener.Start();
                 while (true) {
                     socket = listener.AcceptSocket();
@@ -97,24 +96,32 @@ namespace WindowsFormsApplication1
         String fileName = null;
         List<Auto> list = new List<Auto>();
 
-        public Thread Start(NetworkStream ns, String fileName, int fileCount, Form1 form)
+        public void Start(NetworkStream ns, String fileName, int fileCount, Form1 form)
         {
             this.ns = ns;
-            //ae = new ASCIIEncoding();
             this.fileName = fileName;
             this.num = fileCount;
             this.form = form;
-            //Создание нового экземпляра класса Thread 
-            Thread thread = new Thread(new ThreadStart(ThreadOperations));
-            //Запуск потока
-            thread.Start();
-            return thread;
+            //Thread thread = new Thread(new ThreadStart(ThreadOperations));
+            //thread.Start();
+            //return thread;
+            ThreadOperations();
         }
 
         void ThreadOperations()
         {
+            //form.BeginInvoke((Action)(() =>
+            //{
+            //    this.form.rtb().Text = "Клиент подключился к системе";
+            //}));
             //form.info("Клиент подключился к системе");
-         //   form.Invoke(form.inf, new Object[] { "Клиент подключился к системе" });
+            //form.BeginInvoke(form.myDelegate, new Object[] { "Клиент подключился к системе" });
+
+            //var settextAction = new Action(() => { form.rtb().Text = "Обновляем данные"; });
+            //if (form.rtb().InvokeRequired)
+            //    form.rtb().Invoke(settextAction);
+            //else settextAction();
+
             BinaryFormatter bf = new BinaryFormatter();
             String s1;
             String cmd = "";
